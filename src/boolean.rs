@@ -39,7 +39,7 @@ pub fn read_function(k: usize) -> Function {
     let mut buf = String::new();
     let mut values: Vec<bool> = Vec::with_capacity(target);
 
-    'inner: loop {
+    'outer: loop {
         values.clear();
         buf.clear();
 
@@ -54,7 +54,7 @@ pub fn read_function(k: usize) -> Function {
                 Ok(num) => values.push(num != 0),
                 Err(_) => {
                     println!("Invalid character. Try again.");
-                    continue 'inner;
+                    continue 'outer;
                 }
             }
         }
