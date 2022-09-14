@@ -1,3 +1,4 @@
+mod boolean;
 mod util;
 
 use util::{get_usize, input_helper};
