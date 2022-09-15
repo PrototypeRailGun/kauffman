@@ -1,6 +1,8 @@
 mod boolean;
+mod model;
 mod util;
 
+use model::{random_model, Model};
 use util::{get_usize, input_helper};
 
 fn main() {
@@ -17,13 +19,15 @@ fn main() {
             vec!["M", "A"],
         );
 
-        // Инициализация ненастроенного автомата с параметрами N и K
-
+        let model: Model;
         if conf_mode == "A" {
-            println!("Случайная генерация автомата...");
+            model = random_model(n, k);
         } else {
             println!("Ручной ввод связей...");
+            model = Model::new(n, k);
         }
+
+        println!("{}", model);
 
         let func_conf_mode = input_helper(
             "Select the input mode for logical block functions (Manual or Automatic). Input M/A: ",
