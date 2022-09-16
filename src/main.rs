@@ -2,14 +2,23 @@ mod boolean;
 mod model;
 mod util;
 
-use model::{random_model, Model};
-use util::{get_usize, input_helper};
+use boolean::{random_function, read_function, Function};
+use model::{random_model, read_model, Model};
+use std::collections::HashSet;
+use util::{deserialize_model, get_usize, input_helper, read_init_state, serialize_model};
 
 fn main() {
     let load_state = input_helper("Use an existing model? (Y/n): ", vec!["Y", "N"]);
+    let mut model: Model;
 
     if load_state == "Y" {
-        println!("Deserialization...");
+        match deserialize_model() {
+            Ok(m) => model = m,
+            Err(msg) => {
+                println!("Failed to load the model: {}", msg);
+                return;
+            }
+        }
     } else {
         let n = get_usize("Number of logical blocks: N = ");
         let k = get_usize("Number of block inputs: K = ");
@@ -19,47 +28,81 @@ fn main() {
             vec!["M", "A"],
         );
 
-        let model: Model;
         if conf_mode == "A" {
             model = random_model(n, k);
         } else {
-            println!("Ручной ввод связей...");
-            model = Model::new(n, k);
+            model = read_model(n, k);
         }
-
-        println!("{}", model);
 
         let func_conf_mode = input_helper(
             "Select the input mode for logical block functions (Manual or Automatic). Input M/A: ",
             vec!["M", "A"],
         );
 
+        let mut functions: Vec<Function> = Vec::with_capacity(n);
         if func_conf_mode == "A" {
-            println!("Автоматическое создание функций...");
+            for _ in 0..n {
+                functions.push(random_function(k));
+            }
         } else {
-            println!("Ручной ввод функций...")
+            for _ in 0..n {
+                functions.push(read_function(k));
+            }
         }
+        model.set_functions(functions);
     }
 
-    // Вывод матрицы автомата и используемых логических функций
+    println!("Model:");
+    println!("{}", model);
 
     let ser_state = input_helper("Serialize the model? (Y/n): ", vec!["Y", "N"]);
     if ser_state == "Y" {
-        println!("Serialization...");
+        match serialize_model(&model) {
+            Ok(_) => println!("Serialized successfully!"),
+            Err(msg) => println!("Error: {}", msg),
+        }
     }
 
-    let runs: usize = get_usize("Number of different initial states: ");
+    let mut attractors: Vec<HashSet<Vec<bool>>> = Vec::new();
 
-    let inst_inp_mode = input_helper(
-        "Select the initial state input mode (Manual or Automatic). Input M/A: ",
-        vec!["M", "A"],
+    for mut x in 0..2usize.pow(model.n as u32) {
+        let mut init_state: Vec<bool> = Vec::with_capacity(model.n);
+        while x % 2 > 0 {
+            init_state.push(x % 2 != 0);
+            x /= 2;
+        }
+        for _ in 0..(model.n - init_state.len()) {
+            init_state.push(false);
+        }
+        model.state = init_state;
+
+        let mut states: Vec<Vec<bool>> = Vec::new();
+        loop {
+            match (0..states.len())
+                .filter(|&i| states[i] == model.state)
+                .next()
+            {
+                None => {
+                    states.push(model.state.clone());
+                    //println!("{:?}", model.state);
+                    model.update();
+                }
+                Some(idx) => {
+                    let attr: HashSet<Vec<bool>> = states.into_iter().skip(idx).collect();
+                    println!("{:?}", attr);
+                    if !attractors.contains(&attr) {
+                        attractors.push(attr);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    println!("\nNumber of attractors M = {}", attractors.len());
+    println!(
+        "Average length of the attractor L = {}",
+        (attractors.iter().map(|attr| attr.len()).sum::<usize>() as f64)
+            / (attractors.len() as f64)
     );
-
-    if inst_inp_mode == "M" {
-        println!("Ручной ввод начальных состояний");
-    } else {
-        println!("Автоматический ввод начальных состояний");
-    }
-
-    println!("Результат...");
 }

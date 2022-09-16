@@ -1,7 +1,8 @@
 use rand;
+use serde::{Deserialize, Serialize};
 
 // A boolean function of k variables with one output.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Function {
     k: usize,
     values: Vec<bool>,
