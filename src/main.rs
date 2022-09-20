@@ -66,8 +66,9 @@ fn main() {
     let mut attractors: Vec<HashSet<Vec<bool>>> = Vec::new();
 
     for mut x in 0..2usize.pow(model.n as u32) {
+        //println!("");
         let mut init_state: Vec<bool> = Vec::with_capacity(model.n);
-        while x % 2 > 0 {
+        while x > 0 {
             init_state.push(x % 2 != 0);
             x /= 2;
         }
@@ -88,8 +89,8 @@ fn main() {
                     model.update();
                 }
                 Some(idx) => {
+                    //println!("{:?}", model.state);
                     let attr: HashSet<Vec<bool>> = states.into_iter().skip(idx).collect();
-                    println!("{:?}", attr);
                     if !attractors.contains(&attr) {
                         attractors.push(attr);
                     }
